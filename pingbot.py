@@ -41,7 +41,7 @@ def create_embed(title, description, servName, color=discord.Color.green()):
 
 servHost = "xxx.xxx.xxx.xxx"  # 変更してください
 servPort = 25565
-servName = "深宮鯖"
+servName = "〇〇鯖"
 TOKEN = os.getenv("PING_BOT_TOKEN")
 
 intents = discord.Intents.all()
