@@ -29,8 +29,7 @@ def tcp_ping(host: str, port: int, timeout: float = 1.0) -> bool:
 
 def getmcstatus(host: str, port: int, timeout: float = 1.0):
     server = mcstatus.JavaServer.lookup(f"{host}:{port}", timeout)
-    status = server.status()
-    return status
+    return server
 
 
 def create_embed(title, description, servName, color=discord.Color.green()):
@@ -39,7 +38,7 @@ def create_embed(title, description, servName, color=discord.Color.green()):
     return embed
 
 
-servHost = "xxx.xxx.xxx.xxx"  # 変更してください
+servHost = "192.168.11.70"  # 変更してください
 servPort = 25565
 servName = "〇〇鯖"
 TOKEN = os.getenv("PING_BOT_TOKEN")
@@ -50,23 +49,45 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 @tasks.loop(seconds=30)
 async def playersCount():
-    global servHost, servPort
-    status = getmcstatus(servHost, servPort, 5)
-    global servName
+    global servHost, servPort, servName
+    status = getmcstatus(servHost, servPort, 5).status()
     status = discord.Game(
-        f"{servName}: 現在のプレイヤー数: {status.players.online} / {status.players.max}")
+        f"参加人数: {status.players.online}人")
     await bot.change_presence(activity=status)
 
 
 @bot.tree.command(name="ping", description=servName+"に接続できるか確認します")
 async def ping(interaction: discord.Interaction):
-    global servName
-    if tcp_ping(servHost, servPort, 1):
-        await interaction.response.send_message(embed=create_embed(
-            "確認結果", "サーバーは稼働しています", servName))
-    else:
-        await interaction.response.send_message(embed=create_embed(
-            "確認結果", "サーバーは停止しています", servName, discord.Color.red()))
+    await interaction.response.defer(thinking=True)
+    try:
+        global servName
+        if tcp_ping(servHost, servPort, 1):
+            await interaction.followup.send(embed=create_embed(
+                "確認結果", "サーバーは稼働しています", servName))
+        else:
+            await interaction.followup.send(embed=create_embed(
+                "確認結果", "サーバーは停止しています", servName, discord.Color.red()))
+    except Exception as e:
+        await interaction.followup.send(
+            embed=create_embed("エラー", e.__str__, servName, discord.Color.red()))
+        raise
+
+
+@bot.tree.command(name="getserver", description=servName+"の情報を取得します")
+async def getserver(interaction: discord.Interaction):
+    await interaction.response.defer(thinking=True)
+    try:
+        query = getmcstatus(servHost, servPort, 5).query()
+        players = query.players.names
+        playersStr = ""
+        for player in players:
+            playersStr = playersStr + player+"\n"
+        await interaction.followup.send(
+            embed=create_embed("参加者", playersStr, servName))
+    except Exception as e:
+        await interaction.followup.send(
+            embed=create_embed("エラー", e.__str__, servName, discord.Color.red()))
+        raise
 
 
 @bot.event
