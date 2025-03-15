@@ -6,6 +6,7 @@ from discord.ext import commands, tasks
 from discord import app_commands
 from dotenv import load_dotenv
 import traceback
+import importlib
 
 load_dotenv()
 
@@ -39,9 +40,9 @@ def create_embed(title, description, servName, color=discord.Color.green()):
     return embed
 
 
-servHost = "192.168.11.70"  # 変更してください
-servPort = 25565
-servName = "〇〇鯖"
+servHost = "xxx.xxx.xxx.xxx"  # 変更してください
+servPort = 25565  # 必要があれば変更してください
+servName = "〇〇鯖"  # 変更してください
 TOKEN = os.getenv("PING_BOT_TOKEN")
 
 intents = discord.Intents.all()
@@ -51,10 +52,15 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 @tasks.loop(seconds=30)
 async def playersCount():
     global servHost, servPort, servName
-    status = getmcstatus(servHost, servPort, 5).status()
-    status = discord.Game(
-        f"参加人数: {status.players.online}人")
-    await bot.change_presence(activity=status)
+    try:
+        status = getmcstatus(servHost, servPort, 5).status()
+        status = discord.Game(
+            f"{status.players.online}人が{servName}で遊んでいます")
+        await bot.change_presence(status=discord.Status.online, activity=status)
+    except Exception as e:
+        status = discord.Game(
+            f"{servName}の情報が取得できません")
+        await bot.change_presence(status=discord.Status.do_not_disturb, activity=status)
 
 
 @bot.tree.command(name="ping", description=servName+"に接続できるか確認します")
@@ -95,6 +101,8 @@ async def getserver(interaction: discord.Interaction):
         await interaction.followup.send(
             embed=create_embed("エラー", f"# {type(e).__name__}\nエラー内容: ```\n{stack_trace}\n```\n管理者にお問い合わせください", discord.Color.dark_red()))
         raise
+
+# その他追加したいコマンドがあればこれ以降に追加
 
 
 @bot.event
