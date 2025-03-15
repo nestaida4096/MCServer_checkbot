@@ -5,6 +5,7 @@ import mcstatus
 from discord.ext import commands, tasks
 from discord import app_commands
 from dotenv import load_dotenv
+import traceback
 
 load_dotenv()
 
@@ -68,8 +69,11 @@ async def ping(interaction: discord.Interaction):
             await interaction.followup.send(embed=create_embed(
                 "確認結果", "サーバーは停止しています", servName, discord.Color.red()))
     except Exception as e:
+        user_dir = os.path.expanduser("~")
+        stack_trace = traceback.format_exc()
+        stack_trace = stack_trace.replace(user_dir, "C:\\Users\\*******")
         await interaction.followup.send(
-            embed=create_embed("エラー", e.__str__, servName, discord.Color.red()))
+            embed=create_embed("エラー", f"# {type(e).__name__}\nエラー内容: ```\n{stack_trace}\n```\n管理者にお問い合わせください", discord.Color.dark_red()))
         raise
 
 
@@ -85,8 +89,11 @@ async def getserver(interaction: discord.Interaction):
         await interaction.followup.send(
             embed=create_embed("参加者", playersStr, servName))
     except Exception as e:
+        user_dir = os.path.expanduser("~")
+        stack_trace = traceback.format_exc()
+        stack_trace = stack_trace.replace(user_dir, "C:\\Users\\*******")
         await interaction.followup.send(
-            embed=create_embed("エラー", e.__str__, servName, discord.Color.red()))
+            embed=create_embed("エラー", f"# {type(e).__name__}\nエラー内容: ```\n{stack_trace}\n```\n管理者にお問い合わせください", discord.Color.dark_red()))
         raise
 
 
